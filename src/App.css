@@ -1,0 +1,23 @@
+.flex-container {
+  display: flex;
+}
+
+.block {
+  border: 1px solid black;
+  padding: 2rem;
+  margin: 1rem;
+  width: 45vw;
+  height: 70vh;
+}
+
+.btns-section {
+  justify-content: flex-end;
+  margin-right: 5rem;
+}
+
+.btn {
+  padding: 2rem;
+  font-size: 1.5rem;
+  margin: 0 1rem;
+  cursor: pointer;
+}
