@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-function useRequest<T>(request: () => Promise<T>, debounce?: number ) {
+function useRequest<T>(request: () => Promise<T> ) {
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [state, setState] = useState<{loading: boolean, error: null | string, data: null | T}>({
     loading: false,
@@ -31,18 +31,6 @@ function useRequest<T>(request: () => Promise<T>, debounce?: number ) {
     loadData();
   }, [loadData, request]);
 
-  //****** debounce ******
-  const [fetching, toggleFetching] = useState(false);
-  useEffect(() => {
-    if (!debounce || !calledOnce.current) {
-      return;
-    }
-    const handler = setTimeout(() => loadData().then(() => toggleFetching(!fetching)), debounce);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [debounce, fetching, loadData, state]);
-
   //****** refetch ******
   useEffect(() => {
     if (shouldRefetch) {
@@ -52,8 +40,6 @@ function useRequest<T>(request: () => Promise<T>, debounce?: number ) {
   }, [loadData, request, shouldRefetch])
 
   return {...state, refetch: () => setShouldRefetch(true)};
-
-  //****** Manually trigger ******
 }
 
 export default useRequest;

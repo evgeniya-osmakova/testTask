@@ -8,6 +8,29 @@
   margin: 1rem;
   width: 45vw;
   height: 70vh;
+  overflow-y: scroll;
+}
+
+.item {
+  border: 1px solid black;
+  margin: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
+.item:hover:not(.item--selected) {
+  background-color: lightgray;
+}
+
+.item--selected {
+  background-color: coral;
+  cursor: default;
+}
+
+.item-child {
+  margin-left: 1rem;
 }
 
 .btns-section {
@@ -16,7 +39,7 @@
 }
 
 .btn {
-  padding: 2rem;
+  padding: 1rem;
   font-size: 1.5rem;
   margin: 0 1rem;
   cursor: pointer;
