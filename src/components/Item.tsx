@@ -1,17 +1,16 @@
-import { DragItem, HoverItem, Item, Tree } from '../models/models';
-import React, { Fragment, useRef } from 'react';
+import { dragDirections, Item, Tree } from '../models/models';
+import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core'
 
-interface DragItemData {
-  position: number
-  id: string
-  type: string
-  parentId: number
-}
-
 enum dragTypes {
   ITEM = 'item',
+}
+
+interface DragItemData {
+  position: number
+  id: number
+  parentId: number
 }
 
 type ItemCardProps = {
@@ -19,58 +18,38 @@ type ItemCardProps = {
   parentId: number,
   selectedItem: Item  | null,
   selectItem: (x: Item) => void,
-  moveItem: (dragItem: DragItem, hoverItem: HoverItem) => void,
+  moveItem: ({dragId, hoverId, direction}: {dragId: number, hoverId: number, direction: dragDirections}) => void,
   position: number,
 }
 
 const ItemCard: React.FC<ItemCardProps> = ({tree, parentId , selectedItem, selectItem, moveItem, position}) => {
-  const {label, id, index, children} = tree;
+  const {label, id, children} = tree;
   const ref = useRef<HTMLDivElement>(null)
 
-  const [{ handlerId }, drop] = useDrop<DragItemData, void, { handlerId: Identifier | null }>({
+  const [{ handlerId, isOver, direction }, drop] = useDrop<DragItemData, void, { handlerId: Identifier | null, isOver: boolean, direction: XYCoord | null }>({
     accept: [dragTypes.ITEM],
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver({ shallow: true }),
+        direction: monitor.getDifferenceFromInitialOffset(),
+
       }
     },
-    hover(item: DragItemData, monitor) {
-      if (!ref.current) {
+    drop(item: DragItemData, monitor) {
+      if (!ref.current || monitor.didDrop()) {
         return;
       }
-      const dragIndex = item.position;
-      const dragParentId = item.parentId;
-      const hoverParentId = parentId;
-      const hoverIndex = position
+      const dragId = item.id;
+      const hoverId = id
       // Don't replace items with themselves
-      if (dragIndex === hoverIndex && dragParentId === hoverParentId) {
+      if (dragId === hoverId) {
         return;
       }
-      // Determine rectangle on screen
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      // Get vertical middle
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
-      const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
-      const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
 
-      // Only perform the move when the mouse has crossed half of the items height
-      // When dragging downwards, only move when the cursor is below 50%
-      // When dragging upwards, only move when the cursor is above 50%
-
-      // Dragging downwards
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      // Dragging upwards
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
-      const dragItem = { dragIndex, dragParentId};
-      const hoverItem = { hoverIndex, hoverParentId };
-      moveItem(dragItem, hoverItem);
+      const clientOffset = monitor.getDifferenceFromInitialOffset();
+      const direction = (clientOffset && clientOffset.y < 0) ? dragDirections.UP : dragDirections.DOWN;
+      moveItem({dragId, hoverId, direction});
     },
   })
 
@@ -79,20 +58,23 @@ const ItemCard: React.FC<ItemCardProps> = ({tree, parentId , selectedItem, selec
     item: () => {
       return { id, position, parentId }
     },
-    collect: (monitor: any) => ({
+    collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   })
 
-  const opacity = isDragging ? 0 : 1
-  drag(drop(ref))
+  drag(drop(ref));
 
-  return <Fragment key={id}>
-    <div className={`item ${(selectedItem && id === selectedItem.id) ? 'item--selected' : ''}`}
-         ref={ref}
-         style={{ opacity }}
-         data-handler-id={handlerId}
-         onClick={() => selectItem({label, id, parentId, index})}>
+  return <div key={id} ref={ref}
+              className={(isDragging) ? 'item--dragged' : ''}
+              data-handler-id={handlerId}>
+    <div className={`item
+      ${(selectedItem && id === selectedItem.id) ? 'item--selected' : ''}
+      ${(isOver) ? 'item--hovered' : ''}
+      ${(isOver && !!(direction && direction.y > 0)) ? 'item--moved-up' : ''}
+      ${(isOver && !!(direction && direction.y < 0)) ? 'item--moved-down' : ''}
+      `}
+      onClick={() => selectItem({label, id, parentId})}>
       {label}
     </div>
     {children && children.map((item, ind) =>
@@ -100,7 +82,7 @@ const ItemCard: React.FC<ItemCardProps> = ({tree, parentId , selectedItem, selec
         <ItemCard tree={item} parentId={id} selectedItem={selectedItem} selectItem={selectItem} moveItem={moveItem} position={ind}/>
       </div>
     )}
-  </Fragment>
+  </div>
 }
 
 export default ItemCard;

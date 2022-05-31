@@ -29,6 +29,22 @@
   cursor: default;
 }
 
+.item--hovered {
+  background-color: darksalmon;
+}
+
+.item--moved-down {
+  transform: translateY(1rem);
+}
+
+.item--moved-up {
+  transform: translateY(-1rem);
+}
+
+.item--dragged {
+  opacity: 0;
+}
+
 .item-child {
   margin-left: 1rem;
 }

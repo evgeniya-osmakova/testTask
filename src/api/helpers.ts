@@ -10,7 +10,7 @@ const getResponse = async (url: string | URL, init?: RequestInit) => {
 export const doFetch = async <T>(url: string | URL, init?: RequestInit) => {
   const { response, text, data } = await getResponse(url, init)
   if (!response.ok) {
-    const err = data?.error_description || text || response.statusText
+    const err = data?.message || text || response.statusText
     return Promise.reject(err)
   }
   return data as T
