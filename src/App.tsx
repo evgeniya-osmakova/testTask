@@ -1,13 +1,14 @@
 import './App.css';
-import { useEffect, useState, Fragment, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getItems } from './api/items';
-import { Entity, Tree } from './models/models';
+import { DragItem, Entity, HoverItem, Item, Tree } from './models/models';
 import useRequest from './hooks/useRequest';
+import ItemCard from './components/Item';
 
 function App() {
   const { data, loading, error, refetch } = useRequest(getItems);
   const [items, setItems] = useState<Tree[]>([]);
-  const [selectedItem, setSelectedItem] = useState<null | {label: string, id: number, parentId: number | null, index: number}>(null);
+  const [selectedItem, setSelectedItem] = useState<null | Item>(null);
 
   const prepareData = useCallback(({ labels, entityLongIds, parentEntityLongIds }: Entity) => {
     const ids = entityLongIds.map((id) => ({id, checked: false}));
@@ -75,8 +76,8 @@ function App() {
     return <div>Ошибка при загрузке данных</div>
   }
 
-  const selectItem = ({label, id, parent, index}: {label :string, id :number, parent :number, index :number}) => {
-    setSelectedItem({label, id, parentId: parent, index});
+  const selectItem = ({label, id, parentId, index}: Item) => {
+    setSelectedItem({label, id, parentId, index});
   };
 
   const removeItem = () => {
@@ -106,23 +107,18 @@ function App() {
     console.log(items);
   }
 
-  const renderItem = ({label, id, index, children}: Tree, parent = -1): JSX.Element => {
-    return <Fragment key={id}>
-      <div className={`item ${(selectedItem && id === selectedItem.id) ? 'item--selected' : ''}`} onClick={() => selectItem({label, id, parent, index})}>{label}</div>
-      {children && children.map((item) =>
-        <div key={item.id} className="item-child">
-          {renderItem(item, id)}
-        </div>
-      )}
-    </Fragment>
-  }
+  const moveItem = (dragItem: DragItem, hoverItem: HoverItem) => {
+    const { dragIndex, dragParentId } = dragItem;
+    const { hoverIndex, hoverParentId } = hoverItem;
+
+  };
 
   return <main>
     <div className="flex-container">
       <div className="block">
         {items.length === 0 && loading && <p>...loading</p>}
-        {items.map((item) =>
-          renderItem(item)
+        {items.map((item, ind) =>
+          <ItemCard key={item.id} tree={item} parentId={-1} selectedItem={selectedItem} selectItem={selectItem} moveItem={moveItem} position={ind}/>
         )}
       </div>
       <div className="block">
